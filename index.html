@@ -64,7 +64,7 @@ const CFG={
 firebase.initializeApp(CFG);
 const db=firebase.firestore(),auth=firebase.auth();
 const $=s=>document.querySelector(s),view=(location.hash||'').slice(1);
-const S={cm:[],auto:false,focus:null,nick:'optional',size:18,admin:false};
+const S={cm:[],auto:false,focus:null,nick:'optional',size:18,spam:true,delay:20,admin:false};
 const hid=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h};
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const NICK={required:'필수',optional:'선택',off:'사용 안 함'};
@@ -72,7 +72,7 @@ const settings=db.collection('settings').doc('main'),cmt=db.collection('comments
 const setS=o=>settings.set(o,{merge:true});
 let unsubC=null;
 
-settings.onSnapshot(d=>{const v=d.data()||{};S.auto=!!v.auto;S.nick=v.nick||'optional';S.focus=v.focus||null;S.size=v.size||18;draw()});
+settings.onSnapshot(d=>{const v=d.data()||{};S.auto=!!v.auto;S.nick=v.nick||'optional';S.focus=v.focus||null;S.size=v.size||18;S.spam=v.spam!==false;S.delay=v.delay||20;draw()});
 function watch(){ // 관리자면 전체, 아니면 승인된 댓글만 구독
   if(unsubC)unsubC();
   const q=S.admin?cmt:cmt.where('ok','==',true);
@@ -106,11 +106,11 @@ function send(){
   const m=$('#msg'),tx=$('#tx').value.trim();let nm=$('#nm').value.trim();
   if(S.nick=='required'&&!nm)return m.textContent='닉네임을 입력해주세요.';
   if(S.nick=='off')nm='';else if(!nm)nm='익명';
-  const wait=20-Math.floor((Date.now()-(+localStorage.lastT||0))/1000);
+  const wait=S.delay-Math.floor((Date.now()-(+localStorage.lastT||0))/1000);
   if(!tx)return m.textContent='댓글을 입력해주세요.';
-  if(wait>0)return m.textContent=`도배 방지: ${wait}초 후에 다시 보낼 수 있어요.`;
-  if(localStorage.lastX===tx)return m.textContent='같은 내용은 연속으로 보낼 수 없어요.';
-  if(/(.)\1{7,}/.test(tx))return m.textContent='같은 글자가 너무 많이 반복돼요.';
+  if(S.spam&&wait>0)return m.textContent=`도배 방지: ${wait}초 후에 다시 보낼 수 있어요.`;
+  if(S.spam&&localStorage.lastX===tx)return m.textContent='같은 내용은 연속으로 보낼 수 없어요.';
+  if(S.spam&&/(.)\1{7,}/.test(tx))return m.textContent='같은 글자가 너무 많이 반복돼요.';
   cmt.add({n:nm,x:tx,t:firebase.firestore.FieldValue.serverTimestamp(),ok:false}).then(()=>{
     localStorage.lastT=Date.now();localStorage.lastX=tx;$('#tx').value='';$('#ct').textContent=0;m.textContent='전송 완료! 곧 화면에 떠올라요 ⭐';
   }).catch(()=>m.textContent='전송에 실패했어요. 잠시 후 다시 시도해주세요.');
@@ -132,12 +132,17 @@ function drawAdmin(){
   <div class="row"><span>승인 없이 바로 표시</span><label class="sw"><input type="checkbox" id="au" ${S.auto?'checked':''}><i></i></label></div>
   <div class="sec">닉네임</div><div class="seg">${Object.keys(NICK).map(k=>`<button data-n="${k}" class="${S.nick==k?'on':''}">${NICK[k]}</button>`).join('')}</div>
   <div class="sec">글자 크기 <span id="fsv">${S.size}px</span></div><input type="range" id="fs" min="12" max="48" step="2" value="${S.size}" style="width:100%;accent-color:#9db4ff">
+  <div class="sec">도배 방지</div>
+  <div class="row"><span>도배 방지 사용</span><label class="sw"><input type="checkbox" id="sp" ${S.spam?'checked':''}><i></i></label></div>
+  ${S.spam?`<div class="sec">재전송 간격 <span id="dlv">${S.delay}초</span></div><input type="range" id="dl" min="5" max="120" step="5" value="${S.delay}" style="width:100%;accent-color:#9db4ff">`:''}
   <div class="sec">댓글 ${S.cm.length}건 · 승인 대기 ${pend}건</div>`+
   list.map(c=>{const ok=c.ok;return `<div class="it">${esc(c.x)}${S.nick!='off'&&c.n?` <small>— ${esc(c.n)}</small>`:''}<span class="bd${ok?' on':''}">${ok?'표시 중':'대기'}</span><div class="b">${ok?`<button data-f="${c.id}">${S.focus==c.id?'크게 보기 해제':'크게 보기'}</button><button data-x="${c.id}">삭제</button>`:`<button class="ok" data-a="${c.id}">승인</button><button data-d="${c.id}">삭제</button>`}</div></div>`}).join('')+`<div class="sec">계정</div><div class="it" style="margin:0"><button id="lo">로그아웃</button></div>`;
   $('#au').onchange=e=>setS({auto:e.target.checked});
   p.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>setS({nick:b.dataset.n}));
   $('#fs').oninput=e=>{$('#fsv').textContent=e.target.value+'px'};
   $('#fs').onchange=e=>setS({size:+e.target.value});
+  $('#sp').onchange=e=>setS({spam:e.target.checked});
+  if($('#dl')){$('#dl').oninput=e=>{$('#dlv').textContent=e.target.value+'초'};$('#dl').onchange=e=>setS({delay:+e.target.value})}
   p.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>cmt.doc(b.dataset.a).update({ok:true}));
   p.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>cmt.doc(b.dataset.d).delete());
   p.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>setS({focus:S.focus==b.dataset.f?'':b.dataset.f}));
