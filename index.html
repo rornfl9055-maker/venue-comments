@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>공연장 별 댓글</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--fg:#f1f3ff;--mut:#8f95c2;--ac:#9db4ff;--ac2:#c59bff;--glass:rgba(20,24,60,.55);--line:rgba(255,255,255,.1)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--fg);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;min-height:100vh;background:#04050d;-webkit-font-smoothing:antialiased}
+.bg{position:fixed;inset:0;z-index:-1;background:
+radial-gradient(1.2px 1.2px at 12% 18%,#fff8,transparent),radial-gradient(1px 1px at 33% 72%,#fff7,transparent),radial-gradient(1.4px 1.4px at 58% 28%,#fff9,transparent),radial-gradient(1px 1px at 81% 64%,#fff7,transparent),radial-gradient(1.2px 1.2px at 91% 12%,#fff8,transparent),radial-gradient(1px 1px at 22% 90%,#fff6,transparent),
+radial-gradient(ellipse 60% 50% at 20% 10%,#2a2470aa,transparent),radial-gradient(ellipse 55% 45% at 85% 85%,#4a1f6baa,transparent),#04050d}
+.card{max-width:420px;margin:7vh auto 0;padding:28px 22px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:24px;box-shadow:0 20px 60px #0008}
+.wrap{padding:0 16px}
+h1{font-size:23px;margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;line-height:1.5;margin:0 0 18px}
+label.f{display:block;font-size:12px;color:var(--mut);margin:14px 0 6px}
+input[type=text],input[type=password],textarea{width:100%;font:inherit;font-size:16px;color:var(--fg);background:#0a0d2a99;border:1px solid var(--line);border-radius:14px;padding:13px 14px;outline:0;transition:.2s;resize:none}
+input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px #9db4ff22}
+.cnt{text-align:right;font-size:11px;color:var(--mut);margin-top:4px}
+.btn{width:100%;margin-top:18px;padding:14px;border:0;border-radius:14px;font:inherit;font-weight:700;font-size:16px;color:#0a0c1f;background:linear-gradient(135deg,var(--ac),var(--ac2));cursor:pointer;transition:.2s}
+.btn:active{transform:scale(.98)}
+.lg input{margin-top:8px}#msg{min-height:20px;margin-top:12px;font-size:13px;color:#ffd98a;text-align:center}
+a.l{display:block;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;color:var(--fg);text-decoration:none;background:#ffffff08}
+#sky{position:fixed;inset:0;overflow:hidden}
+.st{position:absolute;max-width:calc(var(--fs,18px)*14);padding:7px 12px;font-size:var(--fs,18px);line-height:1.35;color:#fff;background:linear-gradient(135deg,#ffffff14,#ffffff05);border:1px solid #ffffff1f;border-radius:999px;backdrop-filter:blur(4px);box-shadow:0 0 18px #7d96ff55,inset 0 0 12px #ffffff10;animation:tw 5s ease-in-out infinite,fl 9s ease-in-out infinite;transition:left .6s,top .6s,transform .5s,max-width .5s}
+.st::before{content:"✦";color:var(--ac);margin-right:6px;font-size:12px}
+.st small{color:var(--mut);margin-left:6px;font-size:.72em}
+.st.adm{cursor:pointer}.st.adm:hover{border-color:var(--ac)}
+.st.big{left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(2.6);max-width:300px;font-size:max(15px,calc(var(--fs,18px)*.6));border-radius:22px;padding:16px 22px;z-index:9;animation:none;text-align:center;box-shadow:0 0 60px #7d96ffaa;background:#141845dd}
+@keyframes tw{50%{opacity:.6}}@keyframes fl{50%{translate:0 -8px}}
+#gear{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(14px);color:var(--fg);font-size:18px;cursor:pointer;z-index:30}
+#adm{position:fixed;right:14px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(300px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:20px;padding:16px;font-size:13px;z-index:30}
+#adm h3{margin:0 0 12px;font-size:14px}
+#adm .sec{font-size:11px;color:var(--mut);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sw{position:relative;width:44px;height:26px;flex:none}.sw input{opacity:0;width:0;height:0}
+.sw i{position:absolute;inset:0;background:#2a2f5e;border-radius:99px;transition:.2s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+i{background:linear-gradient(135deg,var(--ac),var(--ac2))}.sw input:checked+i::after{transform:translateX(18px)}
+.seg{display:flex;background:#0a0d2a99;border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{flex:1;border:0;background:none;color:var(--mut);font:inherit;font-size:12px;padding:8px 4px;border-radius:9px;cursor:pointer}
+.seg button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#0a0c1f;font-weight:700}
+.it{background:#ffffff0a;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.it small{color:var(--mut)}.it .b{display:flex;gap:6px;margin-top:8px}
+.it button{flex:1;border:0;border-radius:8px;padding:7px;font:inherit;font-size:12px;cursor:pointer;background:#ffffff14;color:var(--fg)}
+.it button.ok{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#0a0c1f;font-weight:700}
+.note{color:var(--mut);font-size:12px;margin-top:10px}
+#ad h3{margin:0 0 6px;font-size:20px}#ad .sec{font-size:11px;color:var(--mut);margin:20px 0 8px;letter-spacing:.06em}.bd{font-size:11px;padding:2px 8px;border-radius:99px;background:#ffffff14;color:var(--mut);margin-left:6px;white-space:nowrap}.bd.on{background:#9db4ff33;color:var(--ac)}
+</style></head><body><div class="bg"></div><div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+// ▼▼ Firebase 콘솔의 "웹 앱 설정"에서 복사한 값으로 교체하세요 ▼▼
+const CFG={
+  apiKey: "AIzaSyAvYRPQ_rFqPIqtbEQbUmSwNKW-QmHJ1t0",
+  authDomain: "led-project-dbae0.firebaseapp.com",
+  projectId: "led-project-dbae0",
+  storageBucket: "led-project-dbae0.firebasestorage.app",
+  messagingSenderId: "847616785731",
+  appId: "1:847616785731:web:31e757e6229512a5e903f6"
+};
+// ▲▲▲
+firebase.initializeApp(CFG);
+const db=firebase.firestore(),auth=firebase.auth();
+const $=s=>document.querySelector(s),view=(location.hash||'').slice(1);
+const S={cm:[],auto:false,focus:null,nick:'optional',size:18,admin:false};
+const hid=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NICK={required:'필수',optional:'선택',off:'사용 안 함'};
+const settings=db.collection('settings').doc('main'),cmt=db.collection('comments');
+const setS=o=>settings.set(o,{merge:true});
+let unsubC=null;
+
+settings.onSnapshot(d=>{const v=d.data()||{};S.auto=!!v.auto;S.nick=v.nick||'optional';S.focus=v.focus||null;S.size=v.size||18;draw()});
+function watch(){ // 관리자면 전체, 아니면 승인된 댓글만 구독
+  if(unsubC)unsubC();
+  const q=S.admin?cmt:cmt.where('ok','==',true);
+  unsubC=q.onSnapshot(s=>{S.cm=s.docs.map(d=>{const v=d.data();return{id:d.id,...v,t:v.t?v.t.toMillis():Date.now()}}).sort((a,b)=>a.t-b.t);
+    if(S.admin&&S.auto)s.docs.forEach(d=>{if(!d.data().ok&&d.data().t)d.ref.update({ok:true})});draw()},e=>console.error(e));
+}
+if(view=='admin'){auth.onAuthStateChanged(u=>{S.admin=!!u;watch();draw()})}else if(view=='screen'){watch()}
+
+function draw(){
+  if(view=='submit')return drawSubmit();
+  if(view=='screen')return drawScreen();
+  if(view=='admin')return drawAdmin();
+  const a=$('#app');if(a.dataset.h)return;a.dataset.h=1;
+  a.innerHTML=`<div class="wrap"><div class="card"><h1>✨ 공연장 별 댓글</h1><p class="sub">관객이 QR로 남긴 댓글이 공연장 화면에 별처럼 떠오릅니다.</p>
+  <a class="l" href="#submit" onclick="setTimeout(()=>location.reload())">💬 관객 입력 화면 (QR 연결 주소)</a>
+  <a class="l" href="#screen" onclick="setTimeout(()=>location.reload())">🌌 공연장 스크린 (댓글이 뜨는 화면)</a>
+  <a class="l" href="#admin" onclick="setTimeout(()=>location.reload())">🛠 관리자 페이지</a></div></div>`;
+}
+function drawSubmit(){
+  const a=$('#app');
+  if(!a.dataset.h){a.dataset.h=1;
+    a.innerHTML=`<div class="wrap"><div class="card"><h1>💬 댓글 남기기</h1><p class="sub">남긴 댓글이 공연장 화면에 별처럼 떠올라요.</p>
+    <div id="nw"><label class="f" id="nl">닉네임</label><input type="text" id="nm" maxlength="12" placeholder="닉네임"></div>
+    <label class="f">댓글</label><textarea id="tx" maxlength="80" rows="3" placeholder="공연장에 전하고 싶은 말을 남겨보세요"></textarea>
+    <div class="cnt"><span id="ct">0</span>/80</div><button class="btn" id="go">별로 띄우기 ✦</button><div id="msg"></div></div></div>`;
+    $('#tx').oninput=e=>$('#ct').textContent=e.target.value.length;$('#go').onclick=send;
+  }
+  $('#nw').hidden=S.nick=='off';$('#nl').textContent='닉네임 '+(S.nick=='required'?'(필수)':'(선택)');
+}
+function send(){
+  const m=$('#msg'),tx=$('#tx').value.trim();let nm=$('#nm').value.trim();
+  if(S.nick=='required'&&!nm)return m.textContent='닉네임을 입력해주세요.';
+  if(S.nick=='off')nm='';else if(!nm)nm='익명';
+  const wait=20-Math.floor((Date.now()-(+localStorage.lastT||0))/1000);
+  if(!tx)return m.textContent='댓글을 입력해주세요.';
+  if(wait>0)return m.textContent=`도배 방지: ${wait}초 후에 다시 보낼 수 있어요.`;
+  if(localStorage.lastX===tx)return m.textContent='같은 내용은 연속으로 보낼 수 없어요.';
+  if(/(.)\1{7,}/.test(tx))return m.textContent='같은 글자가 너무 많이 반복돼요.';
+  cmt.add({n:nm,x:tx,t:firebase.firestore.FieldValue.serverTimestamp(),ok:false}).then(()=>{
+    localStorage.lastT=Date.now();localStorage.lastX=tx;$('#tx').value='';$('#ct').textContent=0;m.textContent='전송 완료! 곧 화면에 떠올라요 ⭐';
+  }).catch(()=>m.textContent='전송에 실패했어요. 잠시 후 다시 시도해주세요.');
+}
+function drawScreen(){
+  const a=$('#app');
+  if(!a.dataset.h){a.dataset.h=1;a.innerHTML='<div id="sky"></div>'}
+  const shown=S.cm.filter(c=>c.ok).slice(-60),sky=$('#sky');sky.style.setProperty('--fs',S.size+'px');
+  sky.innerHTML=shown.map(c=>{const h=hid(c.id),big=S.focus==c.id;
+    return `<div class="st${big?' big':''}" style="left:${6+h%72}%;top:${8+(h>>8)%76}%;animation-delay:${(h%40)/10}s,${(h%30)/10}s">${esc(c.x)}${S.nick!='off'&&c.n?`<small>${esc(c.n)}</small>`:''}</div>`}).join('');
+}
+function drawAdmin(){
+  const a=$('#app');
+  if(!a.dataset.h){a.dataset.h=1;a.innerHTML='<div class="wrap"><div class="card" id="ad" style="max-width:520px"></div></div>'}
+  const p=$('#ad');
+  if(!S.admin){if(!p.querySelector('#em')){p.innerHTML=`<h3>🛠 관리자 로그인</h3><div class="lg"><input type="text" id="em" placeholder="이메일"><input type="password" id="pw" placeholder="비밀번호"><button class="btn" id="li" style="padding:12px">로그인</button><div id="msg"></div></div>`;$('#li').onclick=()=>auth.signInWithEmailAndPassword($('#em').value.trim(),$('#pw').value).catch(()=>$('#msg').textContent='로그인 실패')}return}
+  const list=S.cm.slice().reverse().slice(0,40),pend=S.cm.filter(c=>!(c.ok)).length;
+  p.innerHTML=`<h3>🛠 관리자 페이지</h3><p class="sub">공연장 스크린은 주소 끝에 #screen 을 붙여 따로 열어 두세요.</p>
+  <div class="row"><span>승인 없이 바로 표시</span><label class="sw"><input type="checkbox" id="au" ${S.auto?'checked':''}><i></i></label></div>
+  <div class="sec">닉네임</div><div class="seg">${Object.keys(NICK).map(k=>`<button data-n="${k}" class="${S.nick==k?'on':''}">${NICK[k]}</button>`).join('')}</div>
+  <div class="sec">글자 크기 <span id="fsv">${S.size}px</span></div><input type="range" id="fs" min="12" max="48" step="2" value="${S.size}" style="width:100%;accent-color:#9db4ff">
+  <div class="sec">댓글 ${S.cm.length}건 · 승인 대기 ${pend}건</div>`+
+  list.map(c=>{const ok=c.ok;return `<div class="it">${esc(c.x)}${S.nick!='off'&&c.n?` <small>— ${esc(c.n)}</small>`:''}<span class="bd${ok?' on':''}">${ok?'표시 중':'대기'}</span><div class="b">${ok?`<button data-f="${c.id}">${S.focus==c.id?'크게 보기 해제':'크게 보기'}</button><button data-x="${c.id}">삭제</button>`:`<button class="ok" data-a="${c.id}">승인</button><button data-d="${c.id}">삭제</button>`}</div></div>`}).join('')+`<div class="sec">계정</div><div class="it" style="margin:0"><button id="lo">로그아웃</button></div>`;
+  $('#au').onchange=e=>setS({auto:e.target.checked});
+  p.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>setS({nick:b.dataset.n}));
+  $('#fs').oninput=e=>{$('#fsv').textContent=e.target.value+'px'};
+  $('#fs').onchange=e=>setS({size:+e.target.value});
+  p.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>cmt.doc(b.dataset.a).update({ok:true}));
+  p.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>cmt.doc(b.dataset.d).delete());
+  p.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>setS({focus:S.focus==b.dataset.f?'':b.dataset.f}));
+  p.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{if(b.dataset.c){cmt.doc(b.dataset.x).delete()}else{b.dataset.c=1;b.textContent='한 번 더 눌러 삭제';setTimeout(()=>{b.dataset.c='';b.textContent='삭제'},3000)}});
+  $('#lo').onclick=()=>auth.signOut();
+}
+window.addEventListener('hashchange',()=>location.reload());
+draw();
+</script></body></html>
