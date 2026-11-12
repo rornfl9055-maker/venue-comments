@@ -22,11 +22,12 @@ input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:va
 .lg input{margin-top:8px}#msg{min-height:20px;margin-top:12px;font-size:13px;color:#ffd98a;text-align:center}
 a.l{display:block;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;color:var(--fg);text-decoration:none;background:#ffffff08}
 #sky{position:fixed;inset:0;overflow:hidden}
-.st{position:absolute;max-width:calc(var(--fs,18px)*14);padding:7px 12px;font-size:var(--fs,18px);line-height:1.35;color:#fff;background:linear-gradient(135deg,#ffffff14,#ffffff05);border:1px solid #ffffff1f;border-radius:999px;backdrop-filter:blur(4px);box-shadow:0 0 18px #7d96ff55,inset 0 0 12px #ffffff10;animation:tw 5s ease-in-out infinite,fl 9s ease-in-out infinite;transition:left .6s,top .6s,transform .5s,max-width .5s}
+.st{position:absolute;left:calc(var(--px,50)*1%);top:calc(var(--py,50)*1%);transform:translate(calc(var(--px,50)*-1%),calc(var(--py,50)*-1%));width:max-content;overflow-wrap:anywhere;word-break:keep-all;max-width:calc(var(--fs,18px)*14);padding:7px 12px;font-size:var(--fs,18px);line-height:1.35;color:#fff;background:linear-gradient(135deg,#ffffff14,#ffffff05);border:1px solid #ffffff1f;border-radius:999px;backdrop-filter:blur(4px);box-shadow:0 0 18px #7d96ff55,inset 0 0 12px #ffffff10;animation:tw 5s ease-in-out var(--d1,0s) infinite,fl 9s ease-in-out var(--d2,0s) infinite;transition:left .6s,top .6s,transform .5s,max-width .5s}
 .st::before{content:"✦";color:var(--ac);margin-right:6px;font-size:12px}
 .st small{color:var(--mut);margin-left:6px;font-size:.72em}
 .st.adm{cursor:pointer}.st.adm:hover{border-color:var(--ac)}
-.st.big{left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(2.6);max-width:300px;font-size:max(15px,calc(var(--fs,18px)*.6));border-radius:22px;padding:16px 22px;z-index:9;animation:none;text-align:center;box-shadow:0 0 60px #7d96ffaa;background:#141845dd}
+.st.big{left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(2.6);max-width:min(300px,calc(88vw/2.6));font-size:max(15px,calc(var(--fs,18px)*.6));border-radius:22px;padding:16px 22px;z-index:9;animation:none;text-align:center;box-shadow:0 0 60px #7d96ffaa;background:#141845dd}
+@keyframes pop{from{scale:.2;opacity:0}60%{scale:1.15;opacity:1}to{scale:1}}.st.pop{animation:pop .9s cubic-bezier(.2,1.2,.4,1) both,tw 5s ease-in-out var(--d1,0s) infinite,fl 9s ease-in-out var(--d2,0s) infinite}
 @keyframes tw{50%{opacity:.6}}@keyframes fl{50%{translate:0 -8px}}
 #gear{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(14px);color:var(--fg);font-size:18px;cursor:pointer;z-index:30}
 #adm{position:fixed;right:14px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(300px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:20px;padding:16px;font-size:13px;z-index:30}
@@ -64,7 +65,7 @@ const CFG={
 firebase.initializeApp(CFG);
 const db=firebase.firestore(),auth=firebase.auth();
 const $=s=>document.querySelector(s),view=(location.hash||'').slice(1);
-const S={cm:[],auto:false,focus:null,nick:'optional',size:18,spam:true,delay:20,admin:false};
+const S={cm:[],auto:false,focus:null,nick:'optional',size:18,spam:true,delay:20,max:30,admin:false};
 const hid=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h};
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const NICK={required:'필수',optional:'선택',off:'사용 안 함'};
@@ -72,7 +73,7 @@ const settings=db.collection('settings').doc('main'),cmt=db.collection('comments
 const setS=o=>settings.set(o,{merge:true});
 let unsubC=null;
 
-settings.onSnapshot(d=>{const v=d.data()||{};S.auto=!!v.auto;S.nick=v.nick||'optional';S.focus=v.focus||null;S.size=v.size||18;S.spam=v.spam!==false;S.delay=v.delay||20;draw()});
+settings.onSnapshot(d=>{const v=d.data()||{};S.auto=!!v.auto;S.nick=v.nick||'optional';S.focus=v.focus||null;S.size=v.size||18;S.spam=v.spam!==false;S.delay=v.delay||20;S.max=v.max||30;draw()});
 function watch(){ // 관리자면 전체, 아니면 승인된 댓글만 구독
   if(unsubC)unsubC();
   const q=S.admin?cmt:cmt.where('ok','==',true);
@@ -115,12 +116,29 @@ function send(){
     localStorage.lastT=Date.now();localStorage.lastX=tx;$('#tx').value='';$('#ct').textContent=0;m.textContent='전송 완료! 곧 화면에 떠올라요 ⭐';
   }).catch(()=>m.textContent='전송에 실패했어요. 잠시 후 다시 시도해주세요.');
 }
+const POS={};
+function place(id){
+  if(POS[id])return POS[id];
+  const taken=Object.values(POS);let best=[50,50],bs=-1;
+  for(let i=0;i<40;i++){const x=6+Math.random()*88,y=14+Math.random()*76;
+    let sc=9;for(const q of taken){const d=Math.hypot((x-q[0])/24,(y-q[1])/9);if(d<sc)sc=d}
+    if(sc>bs){bs=sc;best=[x,y]}}
+  return POS[id]=best;
+}
 function drawScreen(){
   const a=$('#app');
   if(!a.dataset.h){a.dataset.h=1;a.innerHTML='<div id="sky"></div>'}
-  const shown=S.cm.filter(c=>c.ok).slice(-60),sky=$('#sky');sky.style.setProperty('--fs',S.size+'px');
-  sky.innerHTML=shown.map(c=>{const h=hid(c.id),big=S.focus==c.id;
-    return `<div class="st${big?' big':''}" style="left:${6+h%72}%;top:${8+(h>>8)%76}%;animation-delay:${(h%40)/10}s,${(h%30)/10}s">${esc(c.x)}${S.nick!='off'&&c.n?`<small>${esc(c.n)}</small>`:''}</div>`}).join('');
+  const sky=$('#sky');sky.style.setProperty('--fs',S.size+'px');
+  const shown=S.cm.filter(c=>c.ok).slice(-S.max),ids=new Set(shown.map(c=>c.id));
+  [...sky.children].forEach(el=>{if(!ids.has(el.dataset.id))el.remove()});
+  Object.keys(POS).forEach(k=>{if(!ids.has(k))delete POS[k]});
+  shown.forEach(c=>{
+    let el=sky.querySelector('[data-id="'+c.id+'"]');
+    if(!el){const p=place(c.id),h=hid(c.id);el=document.createElement('div');el.className='st'+(Date.now()-c.t<8000?' pop':'');el.dataset.id=c.id;
+      el.style.cssText='--px:'+p[0]+';--py:'+p[1]+';--d1:'+((h%40)/10)+'s;--d2:'+((h%30)/10)+'s';sky.appendChild(el)}
+    el.classList.toggle('big',S.focus==c.id);
+    el.innerHTML=esc(c.x)+(S.nick!='off'&&c.n?'<small>'+esc(c.n)+'</small>':'');
+  });
 }
 function drawAdmin(){
   const a=$('#app');
@@ -132,6 +150,7 @@ function drawAdmin(){
   <div class="row"><span>승인 없이 바로 표시</span><label class="sw"><input type="checkbox" id="au" ${S.auto?'checked':''}><i></i></label></div>
   <div class="sec">닉네임</div><div class="seg">${Object.keys(NICK).map(k=>`<button data-n="${k}" class="${S.nick==k?'on':''}">${NICK[k]}</button>`).join('')}</div>
   <div class="sec">글자 크기 <span id="fsv">${S.size}px</span></div><input type="range" id="fs" min="12" max="48" step="2" value="${S.size}" style="width:100%;accent-color:#9db4ff">
+  <div class="sec">동시에 표시할 댓글 수 <span id="mxv">${S.max}개</span></div><input type="range" id="mx" min="10" max="80" step="5" value="${S.max}" style="width:100%;accent-color:#9db4ff">
   <div class="sec">도배 방지</div>
   <div class="row"><span>도배 방지 사용</span><label class="sw"><input type="checkbox" id="sp" ${S.spam?'checked':''}><i></i></label></div>
   ${S.spam?`<div class="sec">재전송 간격 <span id="dlv">${S.delay}초</span></div><input type="range" id="dl" min="5" max="120" step="5" value="${S.delay}" style="width:100%;accent-color:#9db4ff">`:''}
@@ -141,6 +160,7 @@ function drawAdmin(){
   p.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>setS({nick:b.dataset.n}));
   $('#fs').oninput=e=>{$('#fsv').textContent=e.target.value+'px'};
   $('#fs').onchange=e=>setS({size:+e.target.value});
+  $('#mx').oninput=e=>{$('#mxv').textContent=e.target.value+'개'};$('#mx').onchange=e=>setS({max:+e.target.value});
   $('#sp').onchange=e=>setS({spam:e.target.checked});
   if($('#dl')){$('#dl').oninput=e=>{$('#dlv').textContent=e.target.value+'초'};$('#dl').onchange=e=>setS({delay:+e.target.value})}
   p.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>cmt.doc(b.dataset.a).update({ok:true}));
